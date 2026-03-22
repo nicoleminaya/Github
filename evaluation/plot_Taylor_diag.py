@@ -57,7 +57,13 @@ args    = parser.parse_args()
 # ----- ----- ----- ----- ----- -----
 # DB loading
 # ----- ----- ----- ----- ----- -----
-df  = pd.read_csv(os.path.join('..', 'experiments', 'Taylor_metrics_processed.csv'))
+
+# Ensure we can import the sibling file 'taylorDiagram.py'
+import sys
+current_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(current_dir)
+
+df  = pd.read_csv(os.path.join(current_dir,'..', 'experiments', 'Taylor_metrics_processed.csv'))
 
 wds = args.wds
 std_ref = df.loc[

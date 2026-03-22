@@ -99,14 +99,14 @@ class SensorInstaller():
             replace = False
             )
         signal_mask[observed_nodes] = 1
-        self.sensor_nodes   = set(self.wds.junctions.index[np.where(signal_mask)[0]])
+        self.sensor_nodes = set(self.wds.junctions.index.values[np.where(signal_mask)[0]]) #self.sensor_nodes   = set(self.wds.junctions.index[np.where(signal_mask)[0]])
 
     def deploy_by_xrandom(self, sensor_budget, seed=None, sensor_nodes=None):
         random.seed(seed)
         if not sensor_nodes:
             sensor_nodes    = set()
         free_nodes  = set(self.G.nodes).difference(sensor_nodes)
-        rnd_nodes   = random.sample(free_nodes, sensor_budget)
+        rnd_nodes   = random.sample(sorted(free_nodes), int(sensor_budget)) #sorted(free_nodes) was changed + int(sensor_budget)
         self.sensor_nodes   = sensor_nodes.union(rnd_nodes)
 
     def deploy_by_random_deprecated(self, sensor_budget, seed=None):

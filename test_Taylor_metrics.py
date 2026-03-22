@@ -38,7 +38,7 @@ parser.add_argument('--deploy',
                     type    = str,
                     help    = "Method of sensor deployment.")
 parser.add_argument('--obsrat',
-                    default = .05,
+                    default = .05, # changed to 0.1 to obtain 2 sensors training
                     type    = float,
                     help    = "Observation ratio."
                     )
@@ -158,6 +158,8 @@ wds = Network(pathToWDS)
 G   = get_nx_graph(wds, mode=args.adj)
 L   = nx.linalg.laplacianmatrix.laplacian_matrix(G).todense()
 seed    = run_id
+
+
 sensor_budget   = int(len(wds.junctions) * args.obsrat)
 print('Deploying {} sensors...\n'.format(sensor_budget))
 

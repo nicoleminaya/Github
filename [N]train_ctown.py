@@ -5,6 +5,7 @@ import glob
 import numpy as np
 import pandas as pd
 import torch
+#torch.set_num_threads(8) # CPU cores
 import torch.nn.functional as F
 from torch_geometric.utils import from_networkx
 from torch_geometric.nn import ChebConv
@@ -30,10 +31,10 @@ parser.add_argument('--db',
                     default = 'doe_pumpfed_1',
                     type    = str,
                     help    = "DB.")
-parser.add_argument('--budget',
-                    default = 1,
-                    type    = int,
-                    help    = "Sensor budget.")
+parser.add_argument('--obsrat',
+                    default = 0.05,
+                    type    = float,
+                    help    = "Observation ratio.")
 parser.add_argument('--adj',
                     default = 'binary',
                     choices = ['binary', 'weighted', 'logarithmic', 'pruned'],
@@ -50,7 +51,7 @@ parser.add_argument('--epoch',
                     help    = "Number of epochs.")
 parser.add_argument('--idx',
                     default = None,
-                    type    = int, 
+                    type    = int,
                     help    = "Dev function.")
 parser.add_argument('--batch',
                     default = '40',
@@ -71,6 +72,11 @@ parser.add_argument('--tag',
 parser.add_argument('--deterministic',
                     action  = "store_true",
                     help    = "Setting random seed for sensor placement.")
+parser.add_argument('--gnn',    #TO INCLUDE GATs
+                    default = 'cheb1',
+                    choices = ['cheb1', 'cheb2', 'gat','gat_hyp' ,'gat2'],
+                    type    = str,
+                    help    = "GNN architecture to use.")
 args    = parser.parse_args()
 
 # ----- ----- ----- ----- ----- -----
@@ -83,7 +89,8 @@ pathToExps  = os.path.join(pathToRoot, 'experiments')
 pathToLogs  = os.path.join(pathToExps, 'logs')
 run_id  = 1
 logs    = [f for f in glob.glob(os.path.join(pathToLogs, '*.csv'))]         # See if there was previous created logs for wds_deploy_budget_weightMatrix_tag
-run_stamp   = wds_name+'-'+args.deploy+'-'+str(args.budget)+'-'+args.adj+'-'+args.tag+'-'
+#run_stamp   = wds_name+'-'+args.deploy+'-'+str(args.obsrat)+'-'+args.adj+'-'+args.tag+'-'
+run_stamp   = wds_name+'-'+args.deploy+'-'+str(args.obsrat)+'-'+args.adj+'-'+args.gnn+'-'+args.tag+'-'
 while os.path.join(pathToLogs, run_stamp + str(run_id)+'.csv') in logs:
     run_id  += 1
 run_stamp   = run_stamp + str(run_id)
@@ -99,7 +106,8 @@ pathToWDS   = os.path.join('water_networks', wds_name+'.inp')
 hyperparams = {
         'db': args.db,
         'deploy': args.deploy,
-        'budget': args.budget,
+        #'budget': args.budget,
+        'obsrat': args.obsrat,
         'adj': args.adj,
         'epoch': args.epoch,
         'batch': args.batch,
@@ -168,7 +176,8 @@ if args.deterministic:
 else:
     seed    = None
 
-sensor_budget   = args.budget
+sensor_budget   = int(len(wds.junctions) * args.obsrat)
+#sensor_budget   = args.budget
 print('Deploying {} sensors...\n'.format(sensor_budget))
 
 sensor_shop = SensorInstaller(wds, include_pumps_as_master=True)        # Where to put sensors based on --deploy arg
@@ -240,9 +249,7 @@ if args.idx:                                                                    
     combined_nodes.add(args.idx)
     sensor_shop.set_sensor_nodes(combined_nodes)
 
-
 np.savetxt(pathToSens, np.array(list(sensor_shop.sensor_nodes)), fmt='%d')
-
 
 reader  = DataReader(
             pathToDB,
@@ -275,26 +282,73 @@ vld_y, _, _ = reader.read_data(
     cover   = False
     )
 
-if args.wds == 'anytown':               # Import chebnet class for WDN assigned
-    from model.anytown import ChebNet as Net
-elif args.wds == 'ctown':
-    from model.ctown import ChebNet as Net
-elif args.wds == 'richmond':
-    from model.richmond import ChebNet as Net
+    #SELECT Corresponding gnn MODEL (CHEBNET O GAT)
+if args.gnn == 'gatres':
+    # Since GATRes is generic and doesn't rely on fixed polynomial sizes, 
+    # the same model file for all WDS topologies!
+    from model.gatres import GATResNet as Net
 else:
-    print('Water distribution system is unknown.\n')
-    raise
+    if args.wds == 'anytown':
+        if args.gnn == 'gat':
+            from model.anytown_gat import GATNet as Net
+        elif args.gnn == 'cheb1':
+            from model.anytown import ChebNet as Net
+        elif args.gnn == 'cheb2':
+            from model.anytown_v2 import ChebNet as Net
+        elif args.gnn == 'gat2':
+            from model.anytown_gat_v2 import GATv2ResNet as Net
+        elif args.gnn == 'gat_hyp':
+            from model.anytown_gat_hyp import GATNet as Net
+        else:
+            from model.anytown import ChebNet as Net
+    elif args.wds == 'ctown':
+        if args.gnn == 'gat':
+            from model.ctown_gat import GATNet as Net
+        elif args.gnn == 'cheb2':
+            from model.ctown_v2 import ChebNet as Net
+        elif args.gnn == 'gat2':
+            from model.ctown_gat_v2 import CtownGATv2ResNet as Net
+        else:
+            from model.ctown import ChebNet as Net
+    elif args.wds == 'richmond':
+        from model.richmond import ChebNet as Net
+    elif args.wds == 'hanoi':
+        if args.gnn == 'cheb2':
+            from model.hanoi_v2 import ChebNet as Net
+        elif args.gnn == 'gat':
+            from model.hanoi_gat import GATNet as Net
+        elif args.gnn == 'gat2':
+            from model.hanoi_gat_v2 import GATv2Net as Net
+        else:
+            from model.hanoi import ChebNet as Net
+    else:
+        print('Water distribution system is unknown.\n')
+        raise
+
 
 model = Net(np.shape(trn_x)[-1], np.shape(trn_y)[-1]).to(device)
-optimizer   = torch.optim.Adam([
-    dict(params=model.conv1.parameters(), weight_decay=args.decay),
-    dict(params=model.conv2.parameters(), weight_decay=args.decay),
-    dict(params=model.conv3.parameters(), weight_decay=args.decay),
-    dict(params=model.conv4.parameters(), weight_decay=0)
-    ],
-    lr  = args.lr,
-    eps = 1e-7
+
+if args.gnn == 'gatres':
+    # GATRes uses a dynamic number of blocks, so we apply the optimizer to all parameters
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=args.lr,
+        weight_decay=args.decay,
+        eps=1e-7
     )
+else:
+    # NEW OPTIMIZER CODE so it can work for any model
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.decay)
+    # Original logic for ChebNet and standard GAT
+    #optimizer = torch.optim.Adam([
+    #    dict(params=model.conv1.parameters(), weight_decay=args.decay),
+    #    dict(params=model.conv2.parameters(), weight_decay=args.decay),
+    #    dict(params=model.conv3.parameters(), weight_decay=args.decay),
+    #    dict(params=model.conv4.parameters(), weight_decay=0)
+    #    ],
+    #    lr  = args.lr,
+    #    eps = 1e-7
+    #)
 
 # ----- ----- ----- ----- ----- -----
 # Training
@@ -302,7 +356,7 @@ optimizer   = torch.optim.Adam([
 trn_ldr = build_dataloader(G, trn_x, trn_y, args.batch, shuffle=True)
 vld_ldr = build_dataloader(G, vld_x, vld_y, args.batch, shuffle=False)
 metrics = Metrics(bias_y, scale_y, device)
-estop   = EarlyStopping(min_delta=.00001, patience=30)
+estop   = EarlyStopping(min_delta=.00001, patience=15)
 results = pd.DataFrame(columns=[
     'trn_loss', 'vld_loss', 'vld_rel_err', 'vld_rel_err_o', 'vld_rel_err_h'
     ])

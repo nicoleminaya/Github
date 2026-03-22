@@ -7,9 +7,9 @@ from torch_geometric.nn import ChebConv
 class ChebNet(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ChebNet, self).__init__()
-        self.conv1 = ChebConv(in_channels, 14, K=39)
-        self.conv2 = ChebConv(14, 20, K=43)
-        self.conv3 = ChebConv(20, 27, K=45)
+        self.conv1 = ChebConv(in_channels, 14, K=24) #39
+        self.conv2 = ChebConv(14, 20, K=12) #43
+        self.conv3 = ChebConv(20, 27, K=10) #45
         self.conv4 = ChebConv(27, out_channels, K=1, bias=False)
 
     def forward(self, data):

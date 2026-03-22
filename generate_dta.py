@@ -11,7 +11,7 @@ import zarr
 import numpy as np
 import dask.array as da
 import dask
-import ray
+import ray # Library to run various simulations at the same time
 import pyDOE2 as doe
 from epynet import Network
 
@@ -38,11 +38,11 @@ args    = parser.parse_args()
 # ----- ----- ----- ----- -----
 pathToRoot      = os.path.dirname(os.path.realpath(__file__))
 pathToExps      = os.path.join(pathToRoot, 'experiments')
-pathToParam     = os.path.join(pathToExps, 'hyperparams', 'db', args.params+'.yaml')
+pathToParam     = os.path.join(pathToExps, 'hyperparams', 'db', args.params+'.yaml') # BUSCA EL YAML DE LA WDN
 with open(pathToParam, 'r') as fin:
-    params  = yaml.load(fin, Loader=yaml.Loader)
-pathToNetwork   = os.path.join(pathToRoot, 'water_networks', params['wds']+'.inp')
-pathToDB        = os.path.join(pathToRoot, 'data', args.params)
+    params  = yaml.load(fin, Loader=yaml.Loader) # BUSCA EL NOMBRE DE LA RED, F.E: ANYTOWN
+pathToNetwork   = os.path.join(pathToRoot, 'water_networks', params['wds']+'.inp') # Busca el .inp file
+pathToDB        = os.path.join(pathToRoot, 'data', args.params)     # Ruta para resultados
 
 class SequenceGenerator():
     """Sequence generator for parametric studies or data generation from experiments.
@@ -189,7 +189,7 @@ class SequenceGenerator():
 class simulator():
     """EPYNET wrappper for one-time initialisation of the water network in a multithreaded environment."""
     def __init__(self):
-        """Read network topology from disk."""
+        """Read network topology from disk.""" # TOPOLOGY OF THE NETWORK
         self.wds    = Network(pathToNetwork)
         self.junc_heads = np.empty(shape=(n_batch, n_junc), dtype=np.float32)
         self.pump_flows = np.empty(shape=(n_batch, n_pump), dtype=np.float32)
@@ -326,7 +326,7 @@ root    = zarr.group(
             )
 now     = datetime.datetime.now(pytz.UTC)
 root.attrs['creation_date']   = str(now)
-root.attrs['gmt_timestap']    = int(now.strftime('%s'))
+root.attrs['gmt_timestap']    = int(now.timestamp()) #Before was -> int(now.strftime('%s'))
 root.attrs['description']     = 'WDS digitwin experiment design'
 scene_generator = SequenceGenerator(
                     store, n_scenes, feat_dict,
@@ -374,7 +374,7 @@ tank_level_store  = da.from_zarr(
                 )
 now = datetime.datetime.now(pytz.UTC)
 root.attrs['creation_date']   = str(now)
-root.attrs['gmt_timestap']    = int(now.strftime('%s'))
+root.attrs['gmt_timestap']    = int(now.timestamp()) #Before was -> int(now.strftime('%s'))
 root.attrs['description']     = 'WDS digitwin experiment results'
 junc_heads_store    = root.empty(
                 'junc_heads',

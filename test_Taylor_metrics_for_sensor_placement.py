@@ -139,8 +139,8 @@ def compute_metrics(p, p_hat):
 wds = Network(pathToWDS)
 G   = get_nx_graph(wds, mode=args.adj)
 
-sensor_shop = SensorInstaller(wds)
-sensor_nodes= np.loadtxt(pathToSens, dtype=np.int32)
+sensor_shop = SensorInstaller(wds)                      # Sensor placement accordingly to previous experiment
+sensor_nodes= np.loadtxt(pathToSens, dtype=np.int32)    # Sensor placement accordingly to previous experiment
 sensor_shop.set_sensor_nodes(sensor_nodes)
 
 reader  = DataReader(
@@ -161,6 +161,7 @@ tst_y, bias_nrm, scale_nrm  = reader.read_data(
     rescale = 'normalize',
     cover   = False
     )
+
 tst_ldr = build_dataloader(G, tst_x, tst_y, args.batch, shuffle=False)
 metrics_nrm = Metrics(bias_nrm, scale_nrm, device)
 num_nodes   = len(wds.junctions)
@@ -171,13 +172,13 @@ num_graphs  = len(tst_x)
 # ----- ----- ----- ----- ----- -----
 run_stamp   = run_stamp+'-'+'gcn'
 print(run_stamp)
-p   = restore_real_nodal_p(tst_ldr, num_nodes, num_graphs)
+p   = restore_real_nodal_p(tst_ldr, num_nodes, num_graphs)  # Real Nodal pressures arrays
 
 Net     = load_model()
 model   = Net(np.shape(tst_x)[-1], np.shape(tst_y)[-1]).to(device)
-p_hat   = predict_nodal_p_gcn(tst_ldr, num_nodes, num_graphs)
+p_hat   = predict_nodal_p_gcn(tst_ldr, num_nodes, num_graphs) # GNC Predicted Nodal pressures arrays
 
-msec, sigma = compute_metrics(p, p_hat)
+msec, sigma = compute_metrics(p, p_hat) # Covariance and standard deviation
 
 # ----- ----- ----- ----- ----- -----
 # Write metrics

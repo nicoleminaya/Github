@@ -7,14 +7,14 @@ from torch_geometric.nn import ChebConv
 class ChebNet(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ChebNet, self).__init__()
-        self.conv1 = ChebConv(in_channels, 14, K=39)
-        self.conv2 = ChebConv(14, 20, K=43)
-        self.conv3 = ChebConv(20, 27, K=45)
-        self.conv4 = ChebConv(27, out_channels, K=1, bias=False)
+        self.conv1 = ChebConv(in_channels, 40, K=125) # 60, K=200
+        self.conv2 = ChebConv(40, 40, K=125) #60, 60 K=200
+        self.conv3 = ChebConv(40, 20, K=15) # 60, 30, K=20
+        self.conv4 = ChebConv(20, out_channels, K=1, bias=False) # 30
 
     def forward(self, data):
         x, edge_index, edge_weight  = data.x, data.edge_index, data.weight
-        x = F.silu(self.conv1(x, edge_index, edge_weight)) # SiLu helps with high K values stay stable
+        x = F.silu(self.conv1(x, edge_index, edge_weight))
         x = F.silu(self.conv2(x, edge_index, edge_weight))
         x = F.silu(self.conv3(x, edge_index, edge_weight))
         x = self.conv4(x, edge_index, edge_weight)
