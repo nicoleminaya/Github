@@ -16,8 +16,11 @@ GitHub repository for the paper: "Reconstructing nodal pressure in water distrib
 ├── hyperopt.py             - hyperparameter optimization
 ├── LICENSE
 ├── README.md
-├── test_Taylor_metrics.py  - calculating metrics for Taylor-diagrams
-└── train.py                - training of GraphConvWat
+├── [N]test_Taylor_metrics_bwsn.py  - calculating metrics for Taylor-diagrams
+├── [N]batch_train_bwsn.py  - Use to automatize training experiments
+├── test_Taylor_metrics.py  - calculate Taylor metrics for original model gnn
+├── [N]plot_computation_time.py  - Obtain the computation time of the trainings
+└── [N]train_bwsn.py                - training of GraphConvWat
 ```
 
 ## Citing
