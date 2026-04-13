@@ -11,7 +11,7 @@ parser.add_argument('--batch', default=64, type=int)
 parser.add_argument('--adj', default='binary', choices=['binary', 'weighted', 'logarithmic', 'pruned'], type=str, help="Type of adjacency matrix.")
 parser.add_argument('--epoch', default=500, type=int)
 parser.add_argument('--deterministic', action="store_true", help="Setting random seed for sensor placement.")
-parser.add_argument('--gnn', default='cheb1', choices=['cheb1', 'cheb2', 'gat', 'gat2'], type=str)
+parser.add_argument('--gnn', default='cheb1', choices=['cheb1', 'cheb2', 'cheb3','gat', 'gat2','gat_hyp'], type=str)
 parser.add_argument('--runs', default=4, type=int)
 parser.add_argument('--lr', default=0.00067, type=float)
 parser.add_argument('--decay', default=0.000006, type=float)
@@ -43,7 +43,7 @@ with open(csv_filename, mode='a', newline='') as file:
             
             # Build the base command shared by both conditions
             command = [
-                "python", "[N]train_ctown.py",  
+                "python", "[N]train_bwsn.py",  
                 "--epoch", str(args.epoch),
                 "--tag", str(args.tag),
                 "--deploy", "xrandom",

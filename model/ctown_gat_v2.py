@@ -6,18 +6,15 @@ from torch.nn import Linear
 
 class CtownGATv2ResNet(torch.nn.Module):
     def __init__(self, in_channels, out_channels, hidden_channels=64, num_layers=5, heads=4, dropout=0.2):
-        """
-        Upgraded GATv2 Model customized for larger networks like C-Town.
-        Features: GATv2 (Dynamic Attention) + Residual Connections + Attention Dropout
-        """
+        
         super(CtownGATv2ResNet, self).__init__()
         self.num_layers = num_layers
         self.dropout = dropout
 
-        # 1. Input Projection Layer
+        # Input Projection Layer
         self.lin_in = Linear(in_channels, hidden_channels)
 
-        # 2. GATv2 Layers
+        # GATv2 Layers
         self.convs = torch.nn.ModuleList()
         for _ in range(num_layers):
             self.convs.append(
@@ -30,7 +27,7 @@ class CtownGATv2ResNet(torch.nn.Module):
                 )
             )
 
-        # 3. Output Projection Layer
+        # Output Projection Layer
         self.lin_out = Linear(hidden_channels, out_channels)
 
     def forward(self, data):

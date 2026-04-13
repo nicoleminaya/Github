@@ -35,6 +35,11 @@ parser.add_argument('--obsrat',
                     type    = float,
                     help    = "Observation ratio."
                     )
+parser.add_argument('--batch',
+                    default = 64,
+                    type    = float,
+                    help    = "Batch size."
+                    )
 parser.add_argument('--adj',
                     default = 'binary',
                     choices = ['binary', 'weighted', 'logarithmic', 'pruned'],
@@ -47,7 +52,7 @@ parser.add_argument('--runs',
                     )
 parser.add_argument('--gnn',    #TO INCLUDE GATs
                     default = 'cheb1',
-                    choices = ['cheb1', 'cheb2', 'gat', 'gat_hyp','gat2'],
+                    choices = ['cheb1', 'cheb2', 'cheb3', 'gat', 'gat_hyp','gat2'],
                     type    = str,
                     help    = "GNN architecture to use.")
 args= parser.parse_args()
@@ -59,6 +64,8 @@ if args.wds == 'anytown':
         from model.anytown import ChebNet as Net
     elif args.gnn == 'cheb2':
         from model.anytown_v2 import ChebNet as Net
+    elif args.gnn == 'cheb3':
+            from model.anytown_v3 import ChebNet as Net
     elif args.gnn == 'gat2':
         from model.anytown_gat_v2 import GATv2ResNet as Net
     elif args.gnn == 'gat_hyp':
@@ -81,10 +88,23 @@ elif args.wds == 'hanoi':
         from model.hanoi_gat_v2 import GATv2Net as Net
     elif args.gnn == 'cheb2':
         from model.hanoi_v2 import ChebNet as Net
+    elif args.gnn == 'cheb3':
+        from model.hanoi_v3 import ChebNet as Net
     else:
         from model.hanoi import ChebNet as Net
 elif args.wds == 'richmond':
     from model.richmond import ChebNet as Net
+elif args.wds == 'bwsn':
+    if args.gnn == 'cheb2':
+        from model.bwsn_v2 import ChebNet as Net
+    elif args.gnn == 'gat':
+            from model.bwsn_gat import GATNet as Net
+    elif args.gnn == 'gat_hyp':
+            from model.bwsn_gat_hyp import GATNet as Net
+    elif args.gnn == 'gat2':
+        from model.bwsn_gat_v2 import GATv2Net as Net
+    else:
+        from model.bwsn_v2 import ChebNet as Net
 else:
     print('Water distribution system is unknown.\n')
     raise
@@ -99,7 +119,7 @@ TAG = args.tag
 OBSRAT = args.obsrat
 RUNS = args.runs           # Number of repetitions you trained
 ADJ = args.adj
-BATCH_SIZE = 200
+BATCH_SIZE = args.batch
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Paths
@@ -109,8 +129,8 @@ results_file = os.path.join(base_dir, 'experiments', 'Taylor_metrics.csv')
 def compute_metrics(p, p_hat):
     # Calculate Covariance and Standard Deviation for Taylor Diagram
     # p = Real Pressure, p_hat = Predicted Pressure
-    msec = da.multiply(p - p.mean(), p_hat - p_hat.mean()).mean()
-    sigma = da.sqrt(da.square(p_hat - p_hat.mean()).mean())
+    msec = da.multiply(p - p.mean(), p_hat - p_hat.mean()).mean() # Covariance
+    sigma = da.sqrt(da.square(p_hat - p_hat.mean()).mean()) #Standard deviation
     return msec.compute(), sigma.compute()
 
 def run_evaluation():

@@ -7,10 +7,10 @@ class ChebNet(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ChebNet, self).__init__()
 
-        self.conv1 = ChebConv(in_channels, 16, K=24) #  ChebConv(in_channels, 16, 
-        self.conv2 = ChebConv(16, 20, K=12) #ChebConv(16, 32, K=12) 
-        self.conv3 = ChebConv(20, 25, K=10) #ChebConv(32, 25, K=10) 
-        self.conv4 = ChebConv(25, out_channels, K=1, bias=False) #ChebConv(25, out_channels, K=1, bias=False)
+        self.conv1 = ChebConv(in_channels, 16, K=8) #  ChebConv(in_channels, 16, 
+        self.conv2 = ChebConv(16, 18, K=8) #ChebConv(16, 32, K=12) 
+        self.conv3 = ChebConv(18, 27, K=8) #ChebConv(32, 25, K=10) 
+        self.conv4 = ChebConv(27, out_channels, K=1, bias=False) #ChebConv(25, out_channels, K=1, bias=False)
 
     def forward(self, data):
         x, edge_index, edge_weight = data.x, data.edge_index, data.weight

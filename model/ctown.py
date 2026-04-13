@@ -8,7 +8,7 @@ class ChebNet(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ChebNet, self).__init__()
         self.conv1 = ChebConv(in_channels, 60, K=200)
-        self.conv2 = ChebConv(60, 60, K=200)
+        self.conv2 = ChebConv(60, 60, K=200) 
         self.conv3 = ChebConv(60, 30, K=20)
         self.conv4 = ChebConv(30, out_channels, K=1, bias=False)
 

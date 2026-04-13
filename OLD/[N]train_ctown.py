@@ -5,7 +5,6 @@ import glob
 import numpy as np
 import pandas as pd
 import torch
-#torch.set_num_threads(8) # CPU cores
 import torch.nn.functional as F
 from torch_geometric.utils import from_networkx
 from torch_geometric.nn import ChebConv
@@ -126,11 +125,11 @@ def train_one_epoch(): # PyTorch training loop
         batch   = batch.to(device)
         optimizer.zero_grad()
         out     = model(batch)
-        loss    = F.mse_loss(out, batch.y) # MSE error for total loss
-        loss.backward()
+        loss    = F.mse_loss(out, batch.y) # average MSE error for all #batch scenes pack
+        loss.backward() # gradients calculation and update of internal weights 
         optimizer.step()
-        total_loss  += loss.item() * batch.num_graphs
-    return total_loss / len(trn_ldr.dataset)
+        total_loss  += loss.item() * batch.num_graphs # 
+    return total_loss / len(trn_ldr.dataset) #once all scenes were checkout, extracts the average error
 
 def eval_metrics(dataloader): # Measures how the model is doing
     model.eval()
@@ -147,7 +146,7 @@ def eval_metrics(dataloader): # Measures how the model is doing
         rel_err_obs = metrics.rel_err(
             out,
             batch.y,
-            batch.x[:, -1].type(torch.bool)
+            batch.x[:, -1].type(torch.bool) #Mask used to separate observed nodes
             )
         rel_err_hid = metrics.rel_err(
             out,
@@ -290,7 +289,7 @@ if args.gnn == 'gatres':
 else:
     if args.wds == 'anytown':
         if args.gnn == 'gat':
-            from model.anytown_gat import GATNet as Net
+            from model.anytown_gat import GATNet as Net # Comparativa final (20 runs)
         elif args.gnn == 'cheb1':
             from model.anytown import ChebNet as Net
         elif args.gnn == 'cheb2':
@@ -356,7 +355,7 @@ else:
 trn_ldr = build_dataloader(G, trn_x, trn_y, args.batch, shuffle=True)
 vld_ldr = build_dataloader(G, vld_x, vld_y, args.batch, shuffle=False)
 metrics = Metrics(bias_y, scale_y, device)
-estop   = EarlyStopping(min_delta=.00001, patience=15)
+estop   = EarlyStopping(min_delta=.00001, patience=20)
 results = pd.DataFrame(columns=[
     'trn_loss', 'vld_loss', 'vld_rel_err', 'vld_rel_err_o', 'vld_rel_err_h'
     ])

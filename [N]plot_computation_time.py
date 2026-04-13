@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # 1. Load the data from the CSV file
-csv_filename = "training_computation_times.csv"
+csv_filename = "[BWSN_20_RUNS]training_computation_times.csv"
 
 try:
     df = pd.read_csv(csv_filename)
