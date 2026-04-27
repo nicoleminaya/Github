@@ -41,7 +41,7 @@ parser.add_argument('--adj',
                     help    = "Type of adjacency matrix.")
 parser.add_argument('--deploy',
                     default = 'random',
-                    choices = ['master', 'dist', 'hydrodist', 'hds', 'hdvar', 'random', 'xrandom'],
+                    choices = ['master', 'dist', 'hydrodist', 'hds', 'hdvar', 'random', 'xrandom', 'gena'],
                     type    = str,
                     help    = "Method of sensor deployment.")
 parser.add_argument('--epoch',
@@ -98,6 +98,43 @@ pathToModel = os.path.join(pathToExps, 'models', run_stamp+'.pt')
 pathToMeta  = os.path.join(pathToExps, 'models', run_stamp+'_meta.csv') # Parameter in the training call/corresponding log in expriments/logs
 pathToSens  = os.path.join(pathToExps, 'models', run_stamp+'_sensor_nodes.csv') # Used sensor locations
 pathToWDS   = os.path.join('water_networks', wds_name+'.inp')
+
+
+# Customer arrangement
+if args.wds == 'anytown':
+    CUSTOM_ARRANGEMENTS = {
+    0.05: [4],                
+    0.1: [4, 8],        
+    0.2: [4, 8, 18, 10],
+    0.4: [5, 8, 9, 11, 12, 19, 13, 2],
+    0.8: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19]
+    }
+elif args.wds == 'hanoi':
+    CUSTOM_ARRANGEMENTS = {
+    0.05: [14],                
+    0.1: [2, 11, 24],        
+    0.2: [9, 12, 18, 20, 24, 27],
+    0.4: [2, 5, 8, 11, 12, 14, 16, 20, 22, 25, 28, 30],
+    0.8: [2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 19, 20, 22, 23, 24, 25, 27, 28, 29, 31]
+    }
+elif args.wds == 'bwsn':
+    CUSTOM_ARRANGEMENTS = {
+    0.05: [1, 23, 38, 59, 89, 124],                
+    0.1: [10, 18, 23, 40, 55, 62, 78, 92, 111, 120, 122, 125],        
+    0.2: [7, 13, 15, 19, 20, 26, 31, 34, 38, 41, 46, 53, 54, 62, 66, 71, 75, 80, 93, 99, 112, 116, 120, 122, 124],
+    0.4: [5, 7, 8, 11, 12, 14, 17, 18, 19, 20, 21, 22, 23, 24, 28, 31, 33, 34, 37, 38, 39, 41, 42, 43, 44, 46, 52, 54, 55, 62, 64, 69, 71, 72, 75, 79, 82, 83, 88, 92, 98, 101, 103, 110, 112, 114, 116, 120, 122, 124],
+    0.8: [1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 70, 71, 72, 73, 74, 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 99, 100, 101, 102, 104, 110, 112, 115, 116, 118, 120, 122, 125]
+    }
+else:
+    CUSTOM_ARRANGEMENTS = {
+    0.05: [4],                
+    0.10: [4, 8],        
+    0.20: [4, 8, 18, 10],
+    0.40: [5, 8, 9, 11, 12, 19, 13, 2],
+    0.80: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19]
+    }
+
+
 
 # ----- ----- ----- ----- ----- -----
 # Saving hyperparams
@@ -180,8 +217,34 @@ sensor_budget   = int(len(wds.junctions) * args.obsrat)
 print('Deploying {} sensors...\n'.format(sensor_budget))
 
 sensor_shop = SensorInstaller(wds, include_pumps_as_master=True)        # Where to put sensors based on --deploy arg
+
+
+#######
 if args.deploy == 'master':
     sensor_shop.set_sensor_nodes(sensor_shop.master_nodes)
+elif args.deploy == 'gena':
+
+    # 1. Initialize the installer and grab the fixed Master Nodes
+    fixed_master_nodes = set(sensor_shop.master_nodes)
+
+    # 2. Fetch your specific arrangement for the current ratio
+    if args.obsrat in CUSTOM_ARRANGEMENTS:
+        # Convert your custom list to a set (handling strings vs ints if necessary)
+        custom_nodes = set([int(n) for n in CUSTOM_ARRANGEMENTS[args.obsrat]]) 
+        # Note: Remove `str(n)` if your nodes are strict integers in the wds object
+    else:
+        print(f" Warning: No custom arrangement found for ratio {args.obsrat}!")
+        print(" Falling back to master nodes only.")
+        custom_nodes = set()
+
+    # 3. Combine your custom nodes with the required master nodes
+    all_sensors = fixed_master_nodes.union(custom_nodes)
+
+    # 4. Lock them into the installer
+    sensor_shop.set_sensor_nodes(all_sensors)
+
+    print(f" Total sensors deployed ({len(all_sensors)}): {sensor_shop.sensor_nodes}")
+
 elif args.deploy == 'dist':
     sensor_shop.deploy_by_shortest_path(
             sensor_budget   = sensor_budget,
@@ -248,7 +311,8 @@ if args.idx:                                                                    
     combined_nodes.add(args.idx)
     sensor_shop.set_sensor_nodes(combined_nodes)
 
-np.savetxt(pathToSens, np.array(list(sensor_shop.sensor_nodes)), fmt='%d')
+#np.savetxt(pathToSens, np.array(list(sensor_shop.sensor_nodes)), fmt='%d')
+np.savetxt(pathToSens, np.array(list(sensor_shop.sensor_nodes), dtype=int), fmt='%d')
 
 reader  = DataReader(
             pathToDB,
@@ -256,6 +320,7 @@ reader  = DataReader(
             signal_mask = sensor_shop.signal_mask(),
             node_order  = np.array(list(G.nodes))-1
             )
+
 trn_x, _, _ = reader.read_data(                     # Unknown nodes to 0
     dataset = 'trn',
     varname = 'junc_heads',

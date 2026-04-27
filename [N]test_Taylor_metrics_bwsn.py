@@ -30,6 +30,11 @@ parser.add_argument('--tag',
                     type    = str,
                     help    = "Customer tag"
                     )
+parser.add_argument('--deploy',
+                    default = 'xrandom',
+                    choices = ['master', 'dist', 'hydrodist', 'hds', 'hdvar', 'random', 'xrandom', 'gena'],
+                    type    = str,
+                    help    = "Method of sensor deployment.")
 parser.add_argument('--obsrat',
                     default = 0.05,
                     type    = float,
@@ -79,6 +84,8 @@ elif args.wds == 'ctown':
         from model.ctown_gat_v2 import CtownGATv2ResNet as Net
     elif args.gnn == 'cheb2':
         from model.ctown_v2 import ChebNet as Net
+    elif args.gnn == 'cheb3':
+        from model.ctown_v3 import ChebNet as Net
     else:
         from model.ctown import ChebNet as Net
 elif args.wds == 'hanoi':
@@ -97,6 +104,8 @@ elif args.wds == 'richmond':
 elif args.wds == 'bwsn':
     if args.gnn == 'cheb2':
         from model.bwsn_v2 import ChebNet as Net
+    elif args.gnn == 'cheb3':
+            from model.bwsn_v3 import ChebNet as Net
     elif args.gnn == 'gat':
             from model.bwsn_gat import GATNet as Net
     elif args.gnn == 'gat_hyp':
@@ -120,6 +129,7 @@ OBSRAT = args.obsrat
 RUNS = args.runs           # Number of repetitions you trained
 ADJ = args.adj
 BATCH_SIZE = args.batch
+DEPLOY = args.deploy
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Paths
@@ -150,7 +160,7 @@ def run_evaluation():
         # 1. Define Paths for this specific run
         # Filename format: anytown-random-2-binary-def-1
         #run_stamp = f"{WDS_NAME}-random-{OBSRAT}-binary-{GNN}-{TAG}_{run_id}-1" ## FOR 1 SENSOR TESTING
-        run_stamp = f"{WDS_NAME}-xrandom-{OBSRAT}-{ADJ}-{GNN}-{TAG}-{run_id}"
+        run_stamp = f"{WDS_NAME}-{DEPLOY}-{OBSRAT}-{ADJ}-{GNN}-{TAG}-{run_id}"
         model_path = os.path.join(base_dir, 'experiments', 'models', f"{run_stamp}.pt")
         sensor_path = os.path.join(base_dir, 'experiments', 'models', f"{run_stamp}_sensor_nodes.csv")
         

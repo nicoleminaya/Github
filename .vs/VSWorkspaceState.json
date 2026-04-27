@@ -2,8 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\evaluation",
-    "\\water_networks"
+    "\\model"
   ],
-  "SelectedNode": "\\water_networks\\BWSN.inp",
+  "SelectedNode": "\\model\\bwsn_v2.py",
   "PreviewInSolutionExplorer": false
 }
