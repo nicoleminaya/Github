@@ -1,9 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\evaluation",
-    "\\model"
+    "\\evaluation"
   ],
-  "SelectedNode": "\\model\\bwsn_v2.py",
+  "SelectedNode": "\\[N]aggregate_results.py",
   "PreviewInSolutionExplorer": false
 }

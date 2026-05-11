@@ -17,7 +17,7 @@ wds_type = args.wds.upper()
 # ==========================================
 # Updated colors to match the actual names found in your CSV!
 model_colors = {
-    #'cheb1': '#1f77b4',     # Blue
+    'cheb1': '#1f77b4',     # Blue
     'cheb2': '#ff7f0e',     # Orange
     'cheb3': '#2ca02c',     # Green
     'gat': '#d62728',       # Red
@@ -25,7 +25,12 @@ model_colors = {
     #'gat_hyp': '#8c564b'    # Brown
 }
 
-csv_filename = "training_computation_times.csv"
+#csv_filename = "training_computation_times.csv"
+#Hanoi 
+csv_filename = "[hanoi_noseed_cheb2_v1]training_computation_times_eliminados.csv"
+#bwsn csv_filename = "[BWSN_20_RUNS]training_computation_times_eliminados.csv"
+#anytown no seed csv_filename = "[ANYTOWN_v2][no_seed]training_computation_times_eliminados.csv"
+#anytown seed csv_filename = "[Anytown_SEED]training_computation_times_eliminados.csv"
 
 try:
     # FIX: Explicitly define the 6 column names and skip the broken header row (skiprows=1)
