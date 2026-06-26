@@ -15,6 +15,7 @@ dependencies:
   - networkx
   - matplotlib
   - pandas
+  - numpy
   - pip
   - pyyaml
   - wheel

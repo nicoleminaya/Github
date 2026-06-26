@@ -7,6 +7,7 @@ import os  # Added to check if the file exists
 parser = argparse.ArgumentParser()
 parser.add_argument('--wds', default='anytown', type=str)
 parser.add_argument('--tag', default='def', type=str)
+parser.add_argument('--deploy', default='xrandom', type=str)
 parser.add_argument('--batch', default=64, type=int)
 parser.add_argument('--adj', default='binary', choices=['binary', 'weighted', 'logarithmic', 'pruned'], type=str, help="Type of adjacency matrix.")
 parser.add_argument('--epoch', default=500, type=int)
@@ -46,8 +47,9 @@ with open(csv_filename, mode='a', newline='') as file:
                 "python", "[N]train_ga.py",  
                 "--epoch", str(args.epoch),
                 "--tag", str(args.tag),
-                "--deploy", "gena",
+                "--deploy", str(args.deploy),
                 "--wds", str(args.wds),
+                "--deploy", str(args.deploy),
                 "--obsrat", str(i), 
                 "--batch", str(args.batch),
                 "--gnn", str(args.gnn),

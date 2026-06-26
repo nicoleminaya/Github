@@ -21,6 +21,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # ----- ----- ----- ----- ----- -----
 parser  = argparse.ArgumentParser()
 parser.add_argument('--wds', default='anytown', type=str, help="Water distribution system.")
+parser.add_argument('--model', default='cheb1', type=str, help="Water distribution system.")
 parser.add_argument('--batch', default=80, type=int, help="Batch size.")
 parser.add_argument('--deploy', default='random', type=str, help="How to setup the transducers (e.g., xrandom, random, dist).")
 parser.add_argument('--obsrat', default=0.05, type=float, help="Observation ratio to evaluate.")
@@ -73,7 +74,8 @@ def load_model():
     if args.wds == 'anytown':
         #from model.anytown import ChebNet as Net #FOR CHEB1
         #from model.anytown_v2 import ChebNet as Net #FOR CHEB2
-        from model.anytown_gat import GATNet as Net #FOR GAT
+        #from model.anytown_gat import GATNet as Net #FOR GAT
+        from model.anytown_gat_v2 import GATv2ResNet as Net #FOR GATv2
     elif args.wds == 'ctown':
         from model.ctown import ChebNet as Net
     elif args.wds == 'richmond':
@@ -100,7 +102,7 @@ df_list = []
 
 for run_id in run_ids:
     # Build the run stamp exactly matching your trained models
-    run_stamp   = f"{wds_name}-random-0.05-{args.adj}-{args.tag}_{run_id}-1"
+    run_stamp   = f"{wds_name}-random-0.05-{args.adj}-{args.model}-{args.tag}_{run_id}-1"
     pathToModel = os.path.join(pathToExps, 'models', run_stamp+'.pt')
     pathToSens  = os.path.join(pathToExps, 'models', run_stamp+'_sensor_nodes.csv')
     

@@ -17,9 +17,10 @@ from taylorDiagram import TaylorDiagram
 # ----- ----- ----- ----- ----- -----
 parser  = argparse.ArgumentParser()
 parser.add_argument('--wds', default='anytown', type=str)
+parser.add_argument('--file', default='Taylor_metrics_processed.csv', type=str)
 parser.add_argument('--extend', default=None, type=float)
 parser.add_argument('--smin', default=0, type=float)
-parser.add_argument('--smax', default=1.5, type=float)
+parser.add_argument('--smax', default=1.2, type=float)
 parser.add_argument('--legend', action='store_true')
 parser.add_argument('--fill', action='store_true')
 parser.add_argument('--individual', action='store_true', help="Plot individual runs")
@@ -33,7 +34,7 @@ args = parser.parse_args()
 # ----- ----- ----- ----- ----- -----
 # DB loading
 # ----- ----- ----- ----- ----- -----
-csv_path = os.path.join(current_dir, '..', 'experiments', 'Taylor_metrics_processed.csv')
+csv_path = os.path.join(current_dir, '..', 'experiments', args.file)
 
 if not os.path.exists(csv_path):
     print(f" Error: File not found at {csv_path}")
@@ -41,6 +42,13 @@ if not os.path.exists(csv_path):
     exit(1)
 
 df = pd.read_csv(csv_path)
+df.columns = df.columns.str.strip().str.replace(';', '', regex=False)
+
+required_cols = ['wds', 'model', 'sigma_pred', 'obs_rat', 'corr_coeff']
+missing = [c for c in required_cols if c not in df.columns]
+if missing:
+    raise ValueError(f"Faltan columnas en el CSV: {missing}. Columnas detectadas: {list(df.columns)}")
+
 
 wds = args.wds
 # Filter for Reference (orig) to get the "1.0" mark
@@ -66,13 +74,14 @@ available_ratios = sorted(df['obs_rat'].unique())
 
 # Define ALL possible models
 all_models = {
-    'cheb1':  {'marker': 'o', 'label': 'ChebNet v1'},   
-    'cheb2':  {'marker': '^', 'label': 'ChebNet v2'},   
-    'gat':    {'marker': 'D', 'label': 'GAT'},
-    'gat_hyp':  {'marker': 'v', 'label': 'GAT hyperopt'}, 
-    'gat2': {'marker': '*', 'label': 'GAT v2'},
-    #'gat2_weig':  {'marker': 's', 'label': 'GAT weighted'}, 
-    #'gat2_log': {'marker': 'v', 'label': 'GAT log'}       
+    'cheb1':  {'marker': 'D', 'label': 'Cheb1'},   
+    'cheb2':  {'marker': '^', 'label': 'Cheb2'},   
+    'cheb3':  {'marker': 'o', 'label': 'Cheb3'}, 
+    'gat':    {'marker': 'P', 'label': 'GAT'},
+    'gat_hyp':  {'marker': 'v', 'label': 'GAT_hyp'}, 
+    'gat2': {'marker': '*', 'label': 'GATv2'},
+    'gat2_log': {'marker': 's', 'label': 'GATv2 log'},
+    'gat2_weig': {'marker': 'X', 'label': 'GATv2 weig'}    
 }
 
 # Filter based on user input
@@ -128,7 +137,7 @@ dia._ax.axis[:].major_ticks.set_tick_out(True)
 
 if args.legend:
     # Moved the legend slightly outward so it doesn't overlap the diagram
-    plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1.0), fontsize=10)
+    plt.legend(loc='upper left', bbox_to_anchor=(0.95, 1.0), fontsize=10)
 
 plt.title(f"Taylor Diagram - {wds.capitalize()}", y=1.05, fontsize=14)
 plt.tight_layout()

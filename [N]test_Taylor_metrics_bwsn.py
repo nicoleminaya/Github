@@ -57,7 +57,7 @@ parser.add_argument('--runs',
                     )
 parser.add_argument('--gnn',    #TO INCLUDE GATs
                     default = 'cheb1',
-                    choices = ['cheb1', 'cheb2', 'cheb3', 'gat', 'gat_hyp','gat2'],
+                    choices = ['cheb1', 'cheb2', 'cheb3', 'gat', 'gat_hyp','gat2','orig'],
                     type    = str,
                     help    = "GNN architecture to use.")
 args= parser.parse_args()
@@ -210,6 +210,7 @@ def run_evaluation():
                 p_gcn.append(metrics_nrm._rescale(out).reshape(-1, num_nodes).detach().cpu().numpy())
         p_gcn = da.array(np.concatenate(p_gcn))
         
+
         msec, sigma = compute_metrics(p_real, p_gcn)
         with open(results_file, 'a+', newline='') as f:
             writer = csv.writer(f)
